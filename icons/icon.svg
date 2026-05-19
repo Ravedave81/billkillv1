@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wohnzeit Köln">
-  <rect width="512" height="512" rx="96" fill="#ffffff"/>
-  <circle cx="256" cy="256" r="210" fill="none" stroke="#0088c7" stroke-width="28"/>
-  <path d="M150 265l106-98 106 98" fill="none" stroke="#111" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M183 252v112h146V252" fill="none" stroke="#111" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M237 364v-70h48v70" fill="none" stroke="#111" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>

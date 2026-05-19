@@ -1,4 +1,4 @@
-const CACHE = "rechnungsapp-v8";
+﻿const CACHE = "rechnungsapp-v9";
 
 const urls = [
 "./",
@@ -10,7 +10,9 @@ const urls = [
 "zugferd-footer-layout.js",
 "manifest.json",
 "assets/fussnote.svg",
-"icons/icon.svg"
+"icons/pwa-icon-192.png",
+"icons/pwa-icon-512.png",
+"icons/pwa-icon-maskable-512.png"
 ];
 
 self.addEventListener("install", e=>{
