@@ -1,0 +1,17 @@
+{
+  "name": "billkill-rechnungsapp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "netlify dev",
+    "check": "node --check netlify/functions/create-invoice.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "pdf-lib": "^1.17.1",
+    "pdfmake": "^0.2.12"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.37.4"
+  }
+}

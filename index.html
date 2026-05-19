@@ -19,7 +19,7 @@
 <h2>Rechnungsdaten</h2>
 
 <label>Rechnungsnummer</label>
-<input type="text" id="rechnungsnummer">
+<input type="text" id="rechnungsnummer" placeholder="wird beim finalen Erstellen vergeben">
 
 <label>Rechnungsdatum</label>
 <input type="date" id="datum">
@@ -69,133 +69,111 @@
 <input type="number" id="reinigung" value="99">
 
 <button onclick="berechnen()">Rechnung erstellen</button>
+<button type="button" id="serverPdfButton" onclick="erstelleServerRechnung()">Finales PDF vom Server erstellen</button>
+<p id="serverStatus" class="server-status" role="status" aria-live="polite"></p>
 
 </div>
 
-<!-- =================== RECHNUNGS-VORSCHAU =================== -->
 <div id="rechnung">
 
-  <!-- Kopfzeile -->
-  <div class="header">
-    <div class="sender-block">
-      <b>Wohnzeit-Köln</b><br>
-      Murgweg 2<br>
-      51061 Köln
-    </div>
+<div class="header">
+<div class="sender-block">
+<b>Wohnzeit-Köln</b><br>
+Murgweg 2<br>
+51061 Köln
+</div>
 
-    <div class="invoice-meta">
-      <span class="rechnung-titel">RECHNUNG</span>
-      <table>
-        <tr>
-          <td>Rechnungsnummer:</td>
-          <td><span id="r_nummer"></span></td>
-        </tr>
-        <tr>
-          <td>Rechnungsdatum:</td>
-          <td><span id="r_datum"></span></td>
-        </tr>
-      </table>
-    </div>
-  </div>
+<div class="rechts invoice-meta">
+<b>RECHNUNG</b><br><br>
+Rechnungsnummer: <span id="r_nummer"></span><br>
+Rechnungsdatum: <span id="r_datum"></span>
+</div>
+</div>
 
-  <!-- Kunden-Adresse + Mietzeitraum -->
-  <div class="kunde">
-    <div>
-      <div class="sender-line">Wohnzeit-Köln, Murgweg 2, 51061 Köln</div>
-      <div id="kundeAdresse" class="customer-address"></div>
-    </div>
-    <div class="rental-period">
-      Mietzeitraum:<br>
-      <span id="zeitraum"></span>
-    </div>
-  </div>
+<div class="kunde">
+<div>
+<div class="sender-line">Wohnzeit-Köln, Murgweg 2, 51061 Köln</div>
+<div id="kundeAdresse" class="customer-address"></div>
+</div>
+<div class="rental-period">
+Mietzeitraum:<br>
+<span id="zeitraum"></span>
+</div>
+</div>
 
-  <!-- Anschreiben -->
-  <section class="invoice-copy intro-copy">
-    <p id="anredeText"></p>
-    <p id="buchungsDankText"></p>
-    <p>Hiermit erlauben wir uns die folgenden Leistungen in Rechnung zu stellen:</p>
-  </section>
+<section class="invoice-copy intro-copy">
+<p id="anredeText"></p>
+<p id="buchungsDankText"></p>
+<p>Hiermit erlauben wir uns die folgenden Leistungen in Rechnung zu stellen:</p>
+</section>
 
-  <!-- Positionstabelle -->
-  <table>
-    <thead>
-      <tr>
-        <th>Pos.</th>
-        <th>Beschreibung</th>
-        <th>Bruttopreis</th>
-        <th>Gesamtpreis</th>
-      </tr>
-    </thead>
-    <tbody id="positionen"></tbody>
-    <!-- Summen direkt in der Tabelle (letzte Zeilen ohne Pos.-Nummer) -->
-    <tbody id="summenZeilen">
-      <tr>
-        <td></td>
-        <td>Kulturförderabgabe der Stadt Köln</td>
-        <td></td>
-        <td id="kultur"></td>
-      </tr>
-    </tbody>
-  </table>
+<table>
+<thead>
+<tr>
+<th>Pos.</th>
+<th>Beschreibung</th>
+<th>Preis</th>
+<th>Gesamt</th>
+</tr>
+</thead>
+<tbody id="positionen"></tbody>
+</table>
 
-  <!-- Summenblock rechts ausgerichtet -->
-  <div class="summen">
-    <p class="mwst-zeile">7&nbsp;% UST inkl. <span id="mwst"></span></p>
-    <p>Netto <span id="netto"></span></p>
-    <p><span class="gesamt-zeile">Gesamtsumme <span id="gesamt"></span></span></p>
-  </div>
+<div class="summen">
+<p>Kulturförderabgabe Stadt Köln: <span id="kultur"></span></p>
+<p>7 % UST inkl.: <span id="mwst"></span></p>
+<p>Netto: <span id="netto"></span></p>
+<h2>Gesamtsumme: <span id="gesamt"></span></h2>
+</div>
 
-  <!-- Schlusstext -->
-  <section class="invoice-copy closing-copy">
-    <p><strong>Zahlungsbedingungen:</strong> Zahlung per sofort und ohne Abzüge.</p>
-    <p>Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.</p>
-    <p>Mit freundlichen Grüßen</p>
-    <p>Sarah und David Brand</p>
-  </section>
+<section class="invoice-copy closing-copy">
+<p><strong>Zahlungsbedingungen:</strong> Zahlung per sofort und ohne Abzüge.</p>
+<p>Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.</p>
+<p>Mit freundlichen Grüßen</p>
+<p>Sarah und David Brand</p>
+</section>
 
-  <!-- Fußzeile -->
-  <footer class="invoice-footer" aria-label="Rechnungsfuß">
-    <div class="footer-image" aria-hidden="true">
-      <img src="assets/fussnote_blau.svg" alt="">
-    </div>
-    <address class="footer-data" id="unternehmensdaten">
-      <div class="footer-col">
-        <strong>Wohnzeit-Köln</strong>
-        <span>Murgweg 2</span>
-        <span>51061 Köln</span>
-        <span>Sarah und David Brand</span>
-      </div>
-      <div class="footer-col">
-        <a href="tel:+491634734664">+49 163/4734664</a>
-        <a href="mailto:brand-wohnzeit-koeln@gmx.de">brand-wohnzeit-koeln@gmx.de</a>
-      </div>
-      <div class="footer-col">
-        <strong>Kreissparkasse Köln</strong>
-        <span>DE96 3705 0299 0000 7168 73</span>
-        <span>BIC: COKSDE33XXX</span>
-      </div>
-      <div class="footer-col">
-        <strong>Steuernr.</strong>
-        <span>218/5025/7499</span>
-      </div>
-    </address>
-  </footer>
+<footer class="invoice-footer" aria-label="Rechnungsfuß">
+<div class="footer-image" aria-hidden="true">
+<img src="assets/fussnote.svg" alt="">
+</div>
+<address class="footer-data" id="unternehmensdaten">
+<div class="footer-col">
+<strong>Wohnzeit-Köln</strong>
+<span>Murgweg 2</span>
+<span>51061 Köln</span>
+<span>Sarah und David Brand</span>
+</div>
+<div class="footer-col">
+<a href="tel:+491634734664">+49 163/4734664</a>
+<a href="mailto:brand-wohnzeit-koeln@gmx.de">brand-wohnzeit-koeln@gmx.de</a>
+</div>
+<div class="footer-col">
+<strong>Kreissparkasse Köln</strong>
+<span>DE96 3705 0299 0000 7168 73</span>
+<span>BIC: COKSDE33XXX</span>
+</div>
+<div class="footer-col">
+<strong>Steuernr.</strong>
+<span>218/5025/7499</span>
+</div>
+</address>
+</footer>
 
-  <button onclick="window.print()">PDF erstellen</button>
-  <button onclick="erstelleZugferdPDF()">ZUGFeRD PDF erstellen</button>
-  <button onclick="erstelleZugferdXML()">ZUGFeRD XML erstellen</button>
-  <button onclick="erstelleXRechnungXML()">XRechnung XML erstellen</button>
+<button onclick="window.print()">PDF erstellen</button>
+<button onclick="erstelleZugferdPDF()">ZUGFeRD PDF erstellen</button>
+<button onclick="erstelleZugferdXML()">ZUGFeRD XML erstellen</button>
+<button onclick="erstelleXRechnungXML()">XRechnung XML erstellen</button>
 
-</div><!-- /#rechnung -->
+</div>
 
-</div><!-- /.app -->
+</div>
 
 <script src="app.js"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
+navigator.serviceWorker.register('service-worker.js');
 }
 </script>
 
