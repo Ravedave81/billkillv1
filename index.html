@@ -1,11 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rechnung - Wohnzeit Köln</title>
+<title>Rechnung - Wohnzeit KÃ¶ln</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="fixes.css">
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 </head>
 <body>
@@ -47,25 +48,25 @@
 <label>Abreise</label>
 <input type="date" id="abreise" onchange="berechneNaechte()">
 
-<h2>Übernachtungen</h2>
+<h2>Ãœbernachtungen</h2>
 
 <div id="nachtListe"></div>
 
 <div class="sonderkondition">
-<label>Nächte zu Sonderkondition</label>
+<label>NÃ¤chte zu Sonderkondition</label>
 <input type="number" id="sonderNaechte" value="0">
 <label>Preis pro Nacht</label>
 <input type="number" id="sonderPreis" value="0">
 </div>
 
-<button type="button" onclick="nachtHinzufuegen()">Übernachtung hinzufügen</button>
+<button type="button" onclick="nachtHinzufuegen()">Ãœbernachtung hinzufÃ¼gen</button>
 
 <h2>Weitere Positionen</h2>
 
-<label>Haustier (€)</label>
+<label>Haustier (â‚¬)</label>
 <input type="number" id="haustier" value="0">
 
-<label>Endreinigung (€)</label>
+<label>Endreinigung (â‚¬)</label>
 <input type="number" id="reinigung" value="99">
 
 <button onclick="berechnen()">Rechnung erstellen</button>
@@ -76,89 +77,98 @@
 
 <div id="rechnung">
 
-<div class="header">
-<div class="sender-block">
-<b>Wohnzeit-Köln</b><br>
-Murgweg 2<br>
-51061 Köln
-</div>
+  <div class="header">
+    <div class="sender-block">
+      <b>Wohnzeit-KÃ¶ln</b><br>
+      Murgweg 2<br>
+      51061 KÃ¶ln
+    </div>
 
-<div class="rechts invoice-meta">
-<b>RECHNUNG</b><br><br>
-Rechnungsnummer: <span id="r_nummer"></span><br>
-Rechnungsdatum: <span id="r_datum"></span>
-</div>
-</div>
+    <div class="invoice-meta">
+      <span class="rechnung-titel">RECHNUNG</span>
+      <table>
+        <tr><td>Rechnungsnummer:</td><td><span id="r_nummer"></span></td></tr>
+        <tr><td>Rechnungsdatum:</td><td><span id="r_datum"></span></td></tr>
+      </table>
+    </div>
+  </div>
 
-<div class="kunde">
-<div>
-<div class="sender-line">Wohnzeit-Köln, Murgweg 2, 51061 Köln</div>
-<div id="kundeAdresse" class="customer-address"></div>
-</div>
-<div class="rental-period">
-Mietzeitraum:<br>
-<span id="zeitraum"></span>
-</div>
-</div>
+  <div class="kunde">
+    <div>
+      <div class="sender-line">Wohnzeit-KÃ¶ln, Murgweg 2, 51061 KÃ¶ln</div>
+      <div id="kundeAdresse" class="customer-address"></div>
+    </div>
+    <div class="rental-period">
+      Mietzeitraum:<br>
+      <span id="zeitraum"></span>
+    </div>
+  </div>
 
-<section class="invoice-copy intro-copy">
-<p id="anredeText"></p>
-<p id="buchungsDankText"></p>
-<p>Hiermit erlauben wir uns die folgenden Leistungen in Rechnung zu stellen:</p>
-</section>
+  <section class="invoice-copy intro-copy">
+    <p id="anredeText"></p>
+    <p id="buchungsDankText"></p>
+    <p>Hiermit erlauben wir uns die folgenden Leistungen in Rechnung zu stellen:</p>
+  </section>
 
-<table>
-<thead>
-<tr>
-<th>Pos.</th>
-<th>Beschreibung</th>
-<th>Preis</th>
-<th>Gesamt</th>
-</tr>
-</thead>
-<tbody id="positionen"></tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>Pos.</th>
+        <th>Beschreibung</th>
+        <th>Bruttopreis</th>
+        <th>Gesamtpreis</th>
+      </tr>
+    </thead>
+    <tbody id="positionen"></tbody>
+    <tbody id="summenZeilen">
+      <tr>
+        <td></td>
+        <td>KulturfÃ¶rderabgabe der Stadt KÃ¶ln</td>
+        <td></td>
+        <td id="kultur"></td>
+      </tr>
+    </tbody>
+  </table>
 
-<div class="summen">
-<p>Kulturförderabgabe Stadt Köln: <span id="kultur"></span></p>
-<p>7 % UST inkl.: <span id="mwst"></span></p>
-<p>Netto: <span id="netto"></span></p>
-<h2>Gesamtsumme: <span id="gesamt"></span></h2>
-</div>
+  <div class="summen">
+    <p class="mwst-zeile">7&nbsp;% UST inkl. <span id="mwst"></span></p>
+    <p>Netto <span id="netto"></span></p>
+    <p><span class="gesamt-zeile">Gesamtsumme <span id="gesamt"></span></span></p>
+  </div>
 
-<section class="invoice-copy closing-copy">
-<p><strong>Zahlungsbedingungen:</strong> Zahlung per sofort und ohne Abzüge.</p>
-<p>Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.</p>
-<p>Mit freundlichen Grüßen</p>
-<p>Sarah und David Brand</p>
-</section>
+  <section class="invoice-copy closing-copy">
+    <p><strong>Zahlungsbedingungen:</strong> Zahlung per sofort und ohne AbzÃ¼ge.</p>
+    <p>Bei RÃ¼ckfragen stehen wir selbstverstÃ¤ndlich jederzeit gerne zur VerfÃ¼gung.</p>
+    <p>Mit freundlichen GrÃ¼ÃŸen</p>
+    <p>Sarah und David Brand</p>
+  </section>
 
-<footer class="invoice-footer" aria-label="Rechnungsfuß">
-<div class="footer-image" aria-hidden="true">
-<img src="assets/fussnote.svg" alt="">
-</div>
-<address class="footer-data" id="unternehmensdaten">
-<div class="footer-col">
-<strong>Wohnzeit-Köln</strong>
-<span>Murgweg 2</span>
-<span>51061 Köln</span>
-<span>Sarah und David Brand</span>
-</div>
-<div class="footer-col">
-<a href="tel:+491634734664">+49 163/4734664</a>
-<a href="mailto:brand-wohnzeit-koeln@gmx.de">brand-wohnzeit-koeln@gmx.de</a>
-</div>
-<div class="footer-col">
-<strong>Kreissparkasse Köln</strong>
-<span>DE96 3705 0299 0000 7168 73</span>
-<span>BIC: COKSDE33XXX</span>
-</div>
-<div class="footer-col">
-<strong>Steuernr.</strong>
-<span>218/5025/7499</span>
-</div>
-</address>
-</footer>
+  <footer class="invoice-footer" aria-label="RechnungsfuÃŸ">
+    <div class="footer-image" aria-hidden="true">
+      <img src="assets/fussnote.svg" alt="">
+    </div>
+    <address class="footer-data" id="unternehmensdaten">
+      <div class="footer-col">
+        <strong>Wohnzeit-KÃ¶ln</strong>
+        <span>Murgweg 2</span>
+        <span>51061 KÃ¶ln</span>
+        <span>Sarah und David Brand</span>
+      </div>
+      <div class="footer-col">
+        <a href="tel:+491634734664">+49 163/4734664</a>
+        <a href="mailto:brand-wohnzeit-koeln@gmx.de">brand-wohnzeit-koeln@gmx.de</a>
+      </div>
+      <div class="footer-col">
+        <strong>Kreissparkasse KÃ¶ln</strong>
+        <span>DE96 3705 0299 0000 7168 73</span>
+        <span>BIC: COKSDE33XXX</span>
+      </div>
+      <div class="footer-col">
+        <strong>Steuernr.</strong>
+        <span>218/5025/7499</span>
+      </div>
+    </address>
+  </footer>
 
 <button onclick="window.print()">PDF erstellen</button>
 <button onclick="erstelleZugferdPDF()">ZUGFeRD PDF erstellen</button>
@@ -170,6 +180,8 @@ Mietzeitraum:<br>
 </div>
 
 <script src="app.js"></script>
+<script src="pdf-footer-fix.js"></script>
+<script src="zugferd-footer-layout.js"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

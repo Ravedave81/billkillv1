@@ -1,10 +1,13 @@
-const CACHE = "rechnungsapp-v5";
+const CACHE = "rechnungsapp-v8";
 
 const urls = [
 "./",
 "index.html",
 "style.css",
+"fixes.css",
 "app.js",
+"pdf-footer-fix.js",
+"zugferd-footer-layout.js",
 "manifest.json",
 "assets/fussnote.svg",
 "icons/icon.svg"

@@ -1,0 +1,17 @@
+.closing-copy p:first-child{
+  margin-bottom:96px;
+}
+
+.footer-image img{
+  filter: invert(40%) sepia(95%) saturate(2674%) hue-rotate(174deg) brightness(88%) contrast(101%);
+}
+
+@media print{
+  .closing-copy p:first-child{
+    margin-bottom:28mm;
+  }
+
+  .footer-image img{
+    filter: invert(40%) sepia(95%) saturate(2674%) hue-rotate(174deg) brightness(88%) contrast(101%);
+  }
+}
