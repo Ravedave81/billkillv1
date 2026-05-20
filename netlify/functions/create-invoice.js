@@ -35,6 +35,10 @@ function money(value) {
   return `${roundMoney(value).toFixed(2)} EUR`;
 }
 
+function includedVat(gross, rate) {
+  return roundMoney(Number(gross || 0) * rate / (100 + rate));
+}
+
 function formatDate(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -107,27 +111,50 @@ function recalculate(payload) {
     const amount = roundMoney(position.anzahl || 1);
     const price = roundMoney(position.preis || position.summe || 0);
     const total = roundMoney(position.summe || amount * price);
+    const description = sanitizeText(position.beschreibung);
+    const isPet = /haustier/i.test(description);
+    const isAccommodation = /uebernachtung|übernachtung|endreinigung/i.test(description);
+    const taxRate = Number(position.steuersatz || (isPet ? 19 : 7));
     return {
       position: index + 1,
-      beschreibung: sanitizeText(position.beschreibung),
+      beschreibung: description,
       anzahl: amount,
       preis: price,
-      summe: total
+      summe: total,
+      steuersatz: taxRate,
+      kfaRelevant: position.kfaRelevant ?? isAccommodation
     };
   }).filter((position) => position.beschreibung && position.summe > 0);
 
-  const accommodationGross = positions
-    .filter((position) => /Uebernachtung|Übernachtung/i.test(position.beschreibung))
+  const kfaBase = positions
+    .filter((position) => position.kfaRelevant)
     .reduce((sum, position) => sum + position.summe, 0);
-  const kultur = roundMoney(accommodationGross * 0.05);
-  const subtotal = roundMoney(positions.reduce((sum, position) => sum + position.summe, 0) + kultur);
-  const vat = roundMoney(subtotal * 0.07);
-  const net = roundMoney(subtotal - vat);
+  const gross7 = positions
+    .filter((position) => position.steuersatz === 7)
+    .reduce((sum, position) => sum + position.summe, 0);
+  const gross19 = positions
+    .filter((position) => position.steuersatz === 19)
+    .reduce((sum, position) => sum + position.summe, 0);
+  const kultur = roundMoney(kfaBase * 0.05);
+  const vat7 = includedVat(gross7, 7);
+  const vat19 = includedVat(gross19, 19);
+  const vat = roundMoney(vat7 + vat19);
+  const net7 = roundMoney(gross7 - vat7);
+  const net19 = roundMoney(gross19 - vat19);
+  const net = roundMoney(net7 + net19);
+  const subtotal = roundMoney(gross7 + gross19 + kultur);
 
   return {
     positionen: positions,
+    kfaBemessungsgrundlage: roundMoney(kfaBase),
+    brutto7: roundMoney(gross7),
+    brutto19: roundMoney(gross19),
     kultur,
+    mwst7: vat7,
+    mwst19: vat19,
     mwst: vat,
+    netto7: net7,
+    netto19: net19,
     netto: net,
     gesamt: subtotal
   };
@@ -141,7 +168,7 @@ function createZugferdXml(data, totals, invoiceNumber) {
   <ram:SpecifiedLineTradeAgreement><ram:GrossPriceProductTradePrice><ram:ChargeAmount>${position.summe.toFixed(2)}</ram:ChargeAmount></ram:GrossPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
   <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${position.anzahl || 1}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
   <ram:SpecifiedLineTradeSettlement>
-    <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+    <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${position.steuersatz || 7}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
     <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${position.summe.toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
   </ram:SpecifiedLineTradeSettlement>
 </ram:IncludedSupplyChainTradeLineItem>`).join("\n");
@@ -169,7 +196,8 @@ function createZugferdXml(data, totals, invoiceNumber) {
       <ram:PaymentReference>${escapeXml(invoiceNumber)}</ram:PaymentReference>
       <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
       <ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${COMPANY.iban.replaceAll(" ", "")}</ram:IBANID></ram:PayeePartyCreditorFinancialAccount><ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${COMPANY.bic}</ram:BICID><ram:Name>${escapeXml(COMPANY.bank)}</ram:Name></ram:PayeeSpecifiedCreditorFinancialInstitution></ram:SpecifiedTradeSettlementPaymentMeans>
-      <ram:ApplicableTradeTax><ram:CalculatedAmount>${totals.mwst.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${totals.netto.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+      <ram:ApplicableTradeTax><ram:CalculatedAmount>${totals.mwst7.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${totals.netto7.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+      ${totals.mwst19 > 0 ? `<ram:ApplicableTradeTax><ram:CalculatedAmount>${totals.mwst19.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${totals.netto19.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>19</ram:RateApplicablePercent></ram:ApplicableTradeTax>` : ""}
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${totals.netto.toFixed(2)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${totals.netto.toFixed(2)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount>${totals.mwst.toFixed(2)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${totals.gesamt.toFixed(2)}</ram:GrandTotalAmount><ram:DuePayableAmount>${totals.gesamt.toFixed(2)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation>
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>
@@ -282,8 +310,9 @@ function createPdfDefinition(data, totals, invoiceNumber) {
       {
         stack: [
           `Kulturförderabgabe Stadt Köln: ${money(totals.kultur)}`,
-          `7 % UST inkl.: ${money(totals.mwst)}`,
-          `Netto: ${money(totals.netto)}`,
+          `Enthaltene USt 7 %: ${money(totals.mwst7)}`,
+          ...(totals.mwst19 > 0 ? [`Enthaltene USt 19 %: ${money(totals.mwst19)}`] : []),
+          `Netto steuerpflichtige Leistungen: ${money(totals.netto)}`,
           { text: `Gesamtsumme: ${money(totals.gesamt)}`, bold: true, fontSize: 15, margin: [0, 9, 0, 0] }
         ],
         alignment: "right",

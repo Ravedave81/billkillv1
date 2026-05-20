@@ -40,6 +40,14 @@ function formatEUR(wert){
   return `${Number(wert || 0).toFixed(2)} Euro`
 }
 
+function rundeGeld(wert){
+  return Math.round((Number(wert || 0) + Number.EPSILON) * 100) / 100
+}
+
+function enthalteneUst(brutto, steuersatz){
+  return rundeGeld(Number(brutto || 0) * steuersatz / (100 + steuersatz))
+}
+
 function esc(text){
   return String(text ?? "")
     .replaceAll("&", "&amp;")
@@ -82,7 +90,9 @@ function berechneNaechte(){
 
 function sammleRechnungsDaten(){
   const positionen = []
-  let bruttoUebernachtung = 0
+  let kfaBemessungsgrundlage = 0
+  let brutto7 = 0
+  let brutto19 = 0
   const anzahlFelder = document.querySelectorAll(".nachtAnzahl")
   const preisFelder = document.querySelectorAll(".nachtPreis")
 
@@ -91,13 +101,16 @@ function sammleRechnungsDaten(){
     const preis = Number(preisFelder[index]?.value || 0)
     const summe = anzahl * preis
     if(anzahl > 0 && preis > 0){
-      bruttoUebernachtung += summe
+      kfaBemessungsgrundlage += summe
+      brutto7 += summe
       positionen.push({
         position: positionen.length + 1,
         beschreibung: `${anzahl}x Übernachtung ohne Verpflegung`,
         preis,
         summe,
-        anzahl
+        anzahl,
+        steuersatz: 7,
+        kfaRelevant: true
       })
     }
   })
@@ -106,25 +119,39 @@ function sammleRechnungsDaten(){
   const sonderPreis = Number(document.getElementById("sonderPreis")?.value || 0)
   const sonderSumme = sonderAnzahl * sonderPreis
   if(sonderAnzahl > 0 && sonderPreis > 0){
-    bruttoUebernachtung += sonderSumme
+    kfaBemessungsgrundlage += sonderSumme
+    brutto7 += sonderSumme
     positionen.push({
       position: positionen.length + 1,
       beschreibung: `${sonderAnzahl}x Übernachtung zu Sonderkondition`,
       preis: sonderPreis,
       summe: sonderSumme,
-      anzahl: sonderAnzahl
+      anzahl: sonderAnzahl,
+      steuersatz: 7,
+      kfaRelevant: true
     })
   }
 
   const haustier = Number(document.getElementById("haustier").value || 0)
   const reinigung = Number(document.getElementById("reinigung").value || 0)
-  if(haustier > 0) positionen.push({ position: "", beschreibung: "Haustier", preis: 0, summe: haustier, anzahl: 1 })
-  if(reinigung > 0) positionen.push({ position: "", beschreibung: "Endreinigung", preis: 0, summe: reinigung, anzahl: 1 })
+  if(haustier > 0){
+    brutto19 += haustier
+    positionen.push({ position: "", beschreibung: "Haustier", preis: 0, summe: haustier, anzahl: 1, steuersatz: 19, kfaRelevant: false })
+  }
+  if(reinigung > 0){
+    brutto7 += reinigung
+    kfaBemessungsgrundlage += reinigung
+    positionen.push({ position: "", beschreibung: "Endreinigung", preis: 0, summe: reinigung, anzahl: 1, steuersatz: 7, kfaRelevant: true })
+  }
 
-  const kultur = bruttoUebernachtung * 0.05
-  const gesamt = bruttoUebernachtung + haustier + reinigung + kultur
-  const mwst = gesamt * 0.07
-  const netto = gesamt - mwst
+  const kultur = rundeGeld(kfaBemessungsgrundlage * 0.05)
+  const mwst7 = enthalteneUst(brutto7, 7)
+  const mwst19 = enthalteneUst(brutto19, 19)
+  const mwst = rundeGeld(mwst7 + mwst19)
+  const netto7 = rundeGeld(brutto7 - mwst7)
+  const netto19 = rundeGeld(brutto19 - mwst19)
+  const netto = rundeGeld(netto7 + netto19)
+  const gesamt = rundeGeld(brutto7 + brutto19 + kultur)
 
   return {
     rechnung: document.getElementById("rechnungsnummer").value,
@@ -135,8 +162,15 @@ function sammleRechnungsDaten(){
     anreise: document.getElementById("anreise").value,
     abreise: document.getElementById("abreise").value,
     positionen,
+    kfaBemessungsgrundlage,
+    brutto7,
+    brutto19,
     kultur,
+    mwst7,
+    mwst19,
     mwst,
+    netto7,
+    netto19,
     netto,
     gesamt,
     unternehmen: UNTERNEHMEN
@@ -154,7 +188,9 @@ function berechnen(){
     </tr>`).join("")
 
   document.getElementById("kultur").innerHTML = formatEUR(daten.kultur)
-  document.getElementById("mwst").innerHTML = formatEUR(daten.mwst)
+  document.getElementById("mwst").innerHTML = daten.mwst19 > 0
+    ? `7 %: ${formatEUR(daten.mwst7)}<br>19 %: ${formatEUR(daten.mwst19)}`
+    : formatEUR(daten.mwst7)
   document.getElementById("netto").innerHTML = formatEUR(daten.netto)
   document.getElementById("gesamt").innerHTML = formatEUR(daten.gesamt)
   document.getElementById("zeitraum").innerText = `${formatDatum(daten.anreise)}-${formatDatum(daten.abreise)}`
@@ -246,7 +282,7 @@ function zugferdXMLInhalt(){
   <ram:SpecifiedLineTradeAgreement><ram:GrossPriceProductTradePrice><ram:ChargeAmount>${p.summe.toFixed(2)}</ram:ChargeAmount></ram:GrossPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
   <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${p.anzahl || 1}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
   <ram:SpecifiedLineTradeSettlement>
-    <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+    <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${p.steuersatz || 7}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
     <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${p.summe.toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
   </ram:SpecifiedLineTradeSettlement>
 </ram:IncludedSupplyChainTradeLineItem>`).join("\n")
@@ -274,7 +310,8 @@ function zugferdXMLInhalt(){
       <ram:PaymentReference>${esc(d.rechnung)}</ram:PaymentReference>
       <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
       <ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${esc(u.iban.replaceAll(" ", ""))}</ram:IBANID></ram:PayeePartyCreditorFinancialAccount><ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${esc(u.bic)}</ram:BICID><ram:Name>${esc(u.bank)}</ram:Name></ram:PayeeSpecifiedCreditorFinancialInstitution></ram:SpecifiedTradeSettlementPaymentMeans>
-      <ram:ApplicableTradeTax><ram:CalculatedAmount>${d.mwst.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${d.netto.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+      <ram:ApplicableTradeTax><ram:CalculatedAmount>${d.mwst7.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${d.netto7.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+      ${d.mwst19 > 0 ? `<ram:ApplicableTradeTax><ram:CalculatedAmount>${d.mwst19.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${d.netto19.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>19</ram:RateApplicablePercent></ram:ApplicableTradeTax>` : ""}
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${d.netto.toFixed(2)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${d.netto.toFixed(2)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount>${d.mwst.toFixed(2)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${d.gesamt.toFixed(2)}</ram:GrandTotalAmount><ram:DuePayableAmount>${d.gesamt.toFixed(2)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation>
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>
@@ -384,10 +421,15 @@ async function erstelleZugferdPDF(){
   page.drawText(formatEUR(d.kultur), { x: 468, y, size: 10, font, color: black })
   page.drawLine({ start: { x: marginL, y: y - 7 }, end: { x: marginR, y: y - 7 }, thickness: 0.5, color: grey })
   y -= 30
-  page.drawText("7 % UST inkl.", { x: 320, y, size: 10, font: bold, color: black })
-  page.drawText(formatEUR(d.mwst), { x: 468, y, size: 10, font: bold, color: black })
+  page.drawText("Enthaltene USt 7 %", { x: 320, y, size: 10, font: bold, color: black })
+  page.drawText(formatEUR(d.mwst7), { x: 468, y, size: 10, font: bold, color: black })
+  if(d.mwst19 > 0){
+    y -= 16
+    page.drawText("Enthaltene USt 19 %", { x: 320, y, size: 10, font: bold, color: black })
+    page.drawText(formatEUR(d.mwst19), { x: 468, y, size: 10, font: bold, color: black })
+  }
   y -= 16
-  page.drawText("Netto", { x: 320, y, size: 10, font, color: black })
+  page.drawText("Netto steuerpflichtige Leistungen", { x: 320, y, size: 10, font, color: black })
   page.drawText(formatEUR(d.netto), { x: 468, y, size: 10, font, color: black })
   y -= 24
   page.drawRectangle({ x: 316, y: y - 4, width: 223, height: 22, color: blue })
