@@ -4,15 +4,15 @@ const PdfPrinter = require("pdfmake");
 const { PDFDocument } = require("pdf-lib");
 
 const COMPANY = {
-  name: "Wohnzeit-Koeln",
-  displayName: "Wohnzeit-Koeln",
+  name: "Wohnzeit-Köln",
+  displayName: "Wohnzeit-Köln",
   owner: "Sarah und David Brand",
   street: "Murgweg 2",
   zip: "51061",
-  city: "Koeln",
+  city: "Köln",
   phone: "+49 163 4734664",
   email: "brand-wohnzeit-koeln@gmx.de",
-  bank: "Kreissparkasse Koeln",
+  bank: "Kreissparkasse Köln",
   iban: "DE96 3705 0299 0000 7168 73",
   bic: "COKSDE33XXX",
   taxNumber: "218/5025/7499"
@@ -88,7 +88,7 @@ function salutation(data) {
 }
 
 function bookingText(data) {
-  return `vielen Dank fuer die Hausbuchung in der Zeit vom ${formatDate(data.anreise) || "xx"} bis ${formatDate(data.abreise) || "xx"} und Ihr Vertrauen.`;
+  return `vielen Dank für die Hausbuchung in der Zeit vom ${formatDate(data.anreise) || "xx"} bis ${formatDate(data.abreise) || "xx"} und Ihr Vertrauen.`;
 }
 
 function validatePayload(payload) {
@@ -281,7 +281,7 @@ function createPdfDefinition(data, totals, invoiceNumber) {
       },
       {
         stack: [
-          `Kulturfoerderabgabe Stadt Koeln: ${money(totals.kultur)}`,
+          `Kulturförderabgabe Stadt Köln: ${money(totals.kultur)}`,
           `7 % UST inkl.: ${money(totals.mwst)}`,
           `Netto: ${money(totals.netto)}`,
           { text: `Gesamtsumme: ${money(totals.gesamt)}`, bold: true, fontSize: 15, margin: [0, 9, 0, 0] }
@@ -289,9 +289,9 @@ function createPdfDefinition(data, totals, invoiceNumber) {
         alignment: "right",
         margin: [0, 0, 0, 30]
       },
-      { text: [{ text: "Zahlungsbedingungen: ", bold: true }, "Zahlung per sofort und ohne Abzuege."], fontSize: 9, margin: [0, 0, 0, 56] },
-      { text: "Bei Rueckfragen stehen wir selbstverstaendlich jederzeit gerne zur Verfuegung.", fontSize: 12, margin: [0, 0, 0, 24] },
-      { text: "Mit freundlichen Gruessen", fontSize: 12, margin: [0, 0, 0, 24] },
+      { text: [{ text: "Zahlungsbedingungen: ", bold: true }, "Zahlung per sofort und ohne Abzüge."], fontSize: 9, margin: [0, 0, 0, 56] },
+      { text: "Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.", fontSize: 12, margin: [0, 0, 0, 24] },
+      { text: "Mit freundlichen Grüßen", fontSize: 12, margin: [0, 0, 0, 24] },
       { text: COMPANY.owner, fontSize: 12 }
     ],
     info: {

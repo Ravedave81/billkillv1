@@ -1,13 +1,13 @@
 ﻿const UNTERNEHMEN = {
-  name: "Wohnzeit-KÃ¶ln",
+  name: "Wohnzeit-Köln",
   inhaber: "Sarah und David Brand",
   strasse: "Murgweg 2",
   plz: "51061",
-  ort: "KÃ¶ln",
+  ort: "Köln",
   telefon: "+49 163/4734664",
   telefonUri: "+491634734664",
   email: "brand-wohnzeit-koeln@gmx.de",
-  bank: "Kreissparkasse KÃ¶ln",
+  bank: "Kreissparkasse Köln",
   iban: "DE96 3705 0299 0000 7168 73",
   bic: "COKSDE33XXX",
   steuernummer: "218/5025/7499"
@@ -16,9 +16,9 @@
 function nachtHinzufuegen(){
   const html = `
     <div class="nacht">
-      <label>NÃ¤chte</label>
+      <label>Nächte</label>
       <input type="number" class="nachtAnzahl" value="1" min="0" step="1">
-      <label>Preis pro Nacht (â‚¬)</label>
+      <label>Preis pro Nacht (€)</label>
       <input type="number" class="nachtPreis" value="195" min="0" step="0.01">
       <button onclick="this.parentElement.remove(); berechnen()">entfernen</button>
     </div>`
@@ -68,7 +68,7 @@ function erstelleAnrede(anrede, name){
 }
 
 function erstelleBuchungstext(anreise, abreise){
-  return `vielen Dank fÃ¼r die Hausbuchung in der Zeit vom ${formatDatum(anreise) || "xx"} bis ${formatDatum(abreise) || "xx"} und Ihr Vertrauen.`
+  return `vielen Dank für die Hausbuchung in der Zeit vom ${formatDatum(anreise) || "xx"} bis ${formatDatum(abreise) || "xx"} und Ihr Vertrauen.`
 }
 
 function berechneNaechte(){
@@ -94,7 +94,7 @@ function sammleRechnungsDaten(){
       bruttoUebernachtung += summe
       positionen.push({
         position: positionen.length + 1,
-        beschreibung: `${anzahl}x Ãœbernachtung ohne Verpflegung`,
+        beschreibung: `${anzahl}x Übernachtung ohne Verpflegung`,
         preis,
         summe,
         anzahl
@@ -109,7 +109,7 @@ function sammleRechnungsDaten(){
     bruttoUebernachtung += sonderSumme
     positionen.push({
       position: positionen.length + 1,
-      beschreibung: `${sonderAnzahl}x Ãœbernachtung zu Sonderkondition`,
+      beschreibung: `${sonderAnzahl}x Übernachtung zu Sonderkondition`,
       preis: sonderPreis,
       summe: sonderSumme,
       anzahl: sonderAnzahl
@@ -317,7 +317,7 @@ function drawWrappedText(page, text, x, y, options){
 
 async function erstelleZugferdPDF(){
   if(!window.PDFLib){
-    alert("Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prÃ¼fen und erneut versuchen.")
+    alert("Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen und erneut versuchen.")
     return
   }
 
@@ -330,7 +330,7 @@ async function erstelleZugferdPDF(){
   pdfDoc.setTitle(`Rechnung ${d.rechnung || ""}`.trim())
   pdfDoc.setAuthor(u.name)
   pdfDoc.setSubject("ZUGFeRD-Rechnung mit eingebetteter XML")
-  pdfDoc.setCreator("Wohnzeit-KÃ¶ln Rechnungsapp")
+  pdfDoc.setCreator("Wohnzeit-Köln Rechnungsapp")
   pdfDoc.setProducer("pdf-lib")
   pdfDoc.setKeywords(["ZUGFeRD", "Factur-X", "Rechnung"])
 
@@ -380,7 +380,7 @@ async function erstelleZugferdPDF(){
     y -= 22
   })
 
-  page.drawText("KulturfÃ¶rderabgabe der Stadt KÃ¶ln", { x: marginL + 56, y, size: 10, font, color: black })
+  page.drawText("Kulturförderabgabe der Stadt Köln", { x: marginL + 56, y, size: 10, font, color: black })
   page.drawText(formatEUR(d.kultur), { x: 468, y, size: 10, font, color: black })
   page.drawLine({ start: { x: marginL, y: y - 7 }, end: { x: marginR, y: y - 7 }, thickness: 0.5, color: grey })
   y -= 30
@@ -395,11 +395,11 @@ async function erstelleZugferdPDF(){
   page.drawText(formatEUR(d.gesamt), { x: 446, y: y + 2, size: 11, font: bold, color: rgb(1, 1, 1) })
 
   y -= 40
-  page.drawText("Zahlungsbedingungen: Zahlung per sofort und ohne AbzÃ¼ge.", { x: marginL, y, size: 9, font, color: black })
+  page.drawText("Zahlungsbedingungen: Zahlung per sofort und ohne Abzüge.", { x: marginL, y, size: 9, font, color: black })
   y -= 54
-  page.drawText("Bei RÃ¼ckfragen stehen wir selbstverstÃ¤ndlich jederzeit gerne zur VerfÃ¼gung.", { x: marginL, y, size: 12, font, color: black })
+  page.drawText("Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.", { x: marginL, y, size: 12, font, color: black })
   y -= 28
-  page.drawText("Mit freundlichen GrÃ¼ÃŸen", { x: marginL, y, size: 12, font, color: black })
+  page.drawText("Mit freundlichen Grüßen", { x: marginL, y, size: 12, font, color: black })
   y -= 28
   page.drawText("Sarah und David Brand", { x: marginL, y, size: 12, font, color: black })
 
