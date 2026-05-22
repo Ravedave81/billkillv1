@@ -272,6 +272,36 @@ button.disabled = false
 }
 }
 
+async function pruefeSupabaseStatus(){
+const button = document.getElementById("supabaseStatusButton")
+if(button){
+button.disabled = true
+}
+setServerStatus("Supabase wird geprüft ...")
+
+try{
+const response = await fetch("/.netlify/functions/health-check", {
+method: "GET",
+headers: { "Accept": "application/json" },
+cache: "no-store"
+})
+let json = {}
+try{
+json = await response.json()
+}catch(_err){}
+if(!response.ok || !json.ok){
+throw new Error(json.message || json.error || "Supabase antwortet nicht.")
+}
+setServerStatus(json.message || "Supabase ist erreichbar.")
+}catch(error){
+setServerStatus(error.message || "Supabase konnte nicht geprüft werden.")
+}finally{
+if(button){
+button.disabled = false
+}
+}
+}
+
 function zugferdXMLInhalt(){
   const d = sammleRechnungsDaten()
   const u = d.unternehmen
