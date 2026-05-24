@@ -166,6 +166,9 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
   <cac:AccountingSupplierParty>
     <cac:Party>
       <cbc:EndpointID schemeID="EM">${xml(COMPANY.email)}</cbc:EndpointID>
+      <cac:PartyIdentification>
+        <cbc:ID>${xml(COMPANY.taxNumber)}</cbc:ID>
+      </cac:PartyIdentification>
       <cac:PartyName><cbc:Name>${xml(COMPANY.name)}</cbc:Name></cac:PartyName>
       <cac:PostalAddress>
         <cbc:StreetName>${xml(COMPANY.street)}</cbc:StreetName>
@@ -179,6 +182,7 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
       </cac:PartyTaxScheme>
       <cac:PartyLegalEntity>
         <cbc:RegistrationName>${xml(COMPANY.name)}</cbc:RegistrationName>
+        <cbc:CompanyID>${xml(COMPANY.taxNumber)}</cbc:CompanyID>
       </cac:PartyLegalEntity>
       <cac:Contact>
         <cbc:Name>${xml(COMPANY.owner)}</cbc:Name>
@@ -217,7 +221,6 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
     <cac:TaxCategory>
       <cbc:ID>E</cbc:ID>
       <cbc:Percent>0.00</cbc:Percent>
-      <cbc:TaxExemptionReason>Nicht umsatzsteuerpflichtige kommunale Abgabe</cbc:TaxExemptionReason>
       <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
     </cac:TaxCategory>
   </cac:AllowanceCharge>
