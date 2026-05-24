@@ -211,10 +211,11 @@ function downloadDatei(inhalt, dateiname, mimeType){
   URL.revokeObjectURL(url)
 }
 
-function setServerStatus(text){
+function setServerStatus(text, typ = "info"){
 const status = document.getElementById("serverStatus")
 if(status){
 status.innerText = text || ""
+status.className = `server-status server-status-${typ}`
 }
 }
 
@@ -232,7 +233,7 @@ const daten = sammleRechnungsDaten()
 if(button){
 button.disabled = true
 }
-setServerStatus("Rechnung wird serverseitig erstellt ...")
+setServerStatus("Rechnung wird serverseitig erstellt ...", "info")
 
 try{
 const response = await fetch("/.netlify/functions/create-invoice", {
@@ -262,9 +263,9 @@ response.headers.get("Content-Disposition"),
 `rechnung-${invoiceNumber || "final"}.pdf`
 )
 downloadDatei(blob, dateiname, "application/pdf")
-setServerStatus(invoiceNumber ? `Fertige Rechnung ${invoiceNumber} wurde geladen.` : "Fertige Rechnung wurde geladen.")
+setServerStatus(invoiceNumber ? `Fertige Rechnung ${invoiceNumber} wurde geladen.` : "Fertige Rechnung wurde geladen.", "success")
 }catch(error){
-setServerStatus(error.message || "Unbekannter Fehler beim Erstellen der Rechnung.")
+setServerStatus(error.message || "Unbekannter Fehler beim Erstellen der Rechnung.", "error")
 }finally{
 if(button){
 button.disabled = false
@@ -272,12 +273,12 @@ button.disabled = false
 }
 }
 
-async function pruefeSupabaseStatus(){
+async function pruefeSupabaseStatus(optionen = {}){
 const button = document.getElementById("supabaseStatusButton")
 if(button){
 button.disabled = true
 }
-setServerStatus("Supabase wird geprüft ...")
+setServerStatus(optionen.auto ? "Supabase wird beim Start geprüft ..." : "Supabase wird geprüft ...", "info")
 
 try{
 const response = await fetch("/.netlify/functions/health-check", {
@@ -290,11 +291,14 @@ try{
 json = await response.json()
 }catch(_err){}
 if(!response.ok || !json.ok){
-throw new Error(json.message || json.error || "Supabase antwortet nicht.")
+if(response.status === 404){
+throw new Error("Supabase-Prüfung ist hier nicht verfügbar. Bitte die Netlify-App öffnen, nicht GitHub Pages.")
 }
-setServerStatus(json.message || "Supabase ist erreichbar.")
+throw new Error(json.message || json.error || "Supabase antwortet nicht. Bitte Supabase Dashboard prüfen oder Projekt reaktivieren.")
+}
+setServerStatus(json.message || "Supabase ist erreichbar.", "success")
 }catch(error){
-setServerStatus(error.message || "Supabase konnte nicht geprüft werden.")
+setServerStatus(error.message || "Supabase konnte nicht geprüft werden. Lokal bitte Netlify Dev und .env prüfen.", "error")
 }finally{
 if(button){
 button.disabled = false
@@ -523,4 +527,5 @@ function erstelleXRechnungXML(){
 
 window.onload = function(){
   nachtHinzufuegen()
+  pruefeSupabaseStatus({ auto: true })
 }
