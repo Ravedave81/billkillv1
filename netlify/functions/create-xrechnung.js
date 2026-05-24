@@ -40,6 +40,14 @@ function sanitize(value) {
   return String(value ?? "").trim();
 }
 
+function requireEmail(value) {
+  const email = sanitize(value);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Bitte eine gültige Kunden-E-Mail für die XRechnung eintragen.");
+  }
+  return email;
+}
+
 function splitAddress(address) {
   const lines = sanitize(address).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const street = lines[0] || "Adresse fehlt";
@@ -89,6 +97,7 @@ function recalculate(payload) {
 function requirePayload(payload) {
   const missing = ["datum", "name", "adresse", "anreise", "abreise"].filter((field) => !sanitize(payload[field]));
   if (missing.length) throw new Error(`Bitte ausfüllen: ${missing.join(", ")}`);
+  requireEmail(payload.kundeEmail);
   if (!Array.isArray(payload.positionen) || payload.positionen.length === 0) throw new Error("Mindestens eine Rechnungsposition ist erforderlich.");
 }
 
@@ -106,8 +115,22 @@ function taxSubtotalXml(amount, taxable, rate) {
     </cac:TaxSubtotal>`;
 }
 
+function nonVatSubtotalXml(taxable) {
+  if (taxable <= 0) return "";
+  return `
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="EUR">${taxable.toFixed(2)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="EUR">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID>O</cbc:ID>
+        <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>`;
+}
+
 function createXrechnungXml(payload, totals, invoiceNumber) {
   const buyer = splitAddress(payload.adresse);
+  const buyerEmail = requireEmail(payload.kundeEmail);
   const lines = totals.positions.map((position) => `
   <cac:InvoiceLine>
     <cbc:ID>${position.id}</cbc:ID>
@@ -140,6 +163,7 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
   <cbc:BuyerReference>Keine Leitweg-ID</cbc:BuyerReference>
   <cac:AccountingSupplierParty>
     <cac:Party>
+      <cbc:EndpointID schemeID="EM">${xml(COMPANY.email)}</cbc:EndpointID>
       <cac:PartyName><cbc:Name>${xml(COMPANY.name)}</cbc:Name></cac:PartyName>
       <cac:PostalAddress>
         <cbc:StreetName>${xml(COMPANY.street)}</cbc:StreetName>
@@ -147,10 +171,9 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
         <cbc:PostalZone>${xml(COMPANY.zip)}</cbc:PostalZone>
         <cac:Country><cbc:IdentificationCode>DE</cbc:IdentificationCode></cac:Country>
       </cac:PostalAddress>
-      <cac:PartyTaxScheme>
-        <cbc:CompanyID>${xml(COMPANY.taxNumber)}</cbc:CompanyID>
-        <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
-      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${xml(COMPANY.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
       <cac:Contact>
         <cbc:Name>${xml(COMPANY.owner)}</cbc:Name>
         <cbc:Telephone>${xml(COMPANY.phone)}</cbc:Telephone>
@@ -160,6 +183,7 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
   </cac:AccountingSupplierParty>
   <cac:AccountingCustomerParty>
     <cac:Party>
+      <cbc:EndpointID schemeID="EM">${xml(buyerEmail)}</cbc:EndpointID>
       <cac:PartyName><cbc:Name>${xml(payload.name)}</cbc:Name></cac:PartyName>
       <cac:PostalAddress>
         <cbc:StreetName>${xml(buyer.street)}</cbc:StreetName>
@@ -167,6 +191,9 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
         <cbc:PostalZone>${xml(buyer.zip)}</cbc:PostalZone>
         <cac:Country><cbc:IdentificationCode>${xml(buyer.country)}</cbc:IdentificationCode></cac:Country>
       </cac:PostalAddress>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${xml(payload.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
     </cac:Party>
   </cac:AccountingCustomerParty>
   <cac:PaymentMeans>
@@ -183,13 +210,11 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
     <cbc:Amount currencyID="EUR">${totals.kultur.toFixed(2)}</cbc:Amount>
     <cac:TaxCategory>
       <cbc:ID>O</cbc:ID>
-      <cbc:Percent>0.00</cbc:Percent>
-      <cbc:TaxExemptionReason>Kommunale Abgabe, nicht umsatzsteuerpflichtig</cbc:TaxExemptionReason>
       <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
     </cac:TaxCategory>
   </cac:AllowanceCharge>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="EUR">${totals.taxTotal.toFixed(2)}</cbc:TaxAmount>${taxSubtotalXml(totals.vat7, totals.net7, 7)}${taxSubtotalXml(totals.vat19, totals.net19, 19)}
+    <cbc:TaxAmount currencyID="EUR">${totals.taxTotal.toFixed(2)}</cbc:TaxAmount>${taxSubtotalXml(totals.vat7, totals.net7, 7)}${taxSubtotalXml(totals.vat19, totals.net19, 19)}${nonVatSubtotalXml(totals.kultur)}
   </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
     <cbc:LineExtensionAmount currencyID="EUR">${totals.lineNet.toFixed(2)}</cbc:LineExtensionAmount>

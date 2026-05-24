@@ -159,6 +159,7 @@ function sammleRechnungsDaten(){
     anrede: document.getElementById("anrede").value,
     name: document.getElementById("name").value,
     adresse: document.getElementById("adresse").value,
+    kundeEmail: document.getElementById("kundeEmail")?.value || "",
     anreise: document.getElementById("anreise").value,
     abreise: document.getElementById("abreise").value,
     positionen,
