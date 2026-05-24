@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+﻿const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 
 const COMPANY = {
@@ -115,14 +115,16 @@ function taxSubtotalXml(amount, taxable, rate) {
     </cac:TaxSubtotal>`;
 }
 
-function nonVatSubtotalXml(taxable) {
+function exemptSubtotalXml(taxable) {
   if (taxable <= 0) return "";
   return `
     <cac:TaxSubtotal>
       <cbc:TaxableAmount currencyID="EUR">${taxable.toFixed(2)}</cbc:TaxableAmount>
       <cbc:TaxAmount currencyID="EUR">0.00</cbc:TaxAmount>
       <cac:TaxCategory>
-        <cbc:ID>O</cbc:ID>
+        <cbc:ID>E</cbc:ID>
+        <cbc:Percent>0.00</cbc:Percent>
+        <cbc:TaxExemptionReason>Nicht umsatzsteuerpflichtige kommunale Abgabe</cbc:TaxExemptionReason>
         <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
       </cac:TaxCategory>
     </cac:TaxSubtotal>`;
@@ -174,6 +176,10 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
       <cac:PartyLegalEntity>
         <cbc:RegistrationName>${xml(COMPANY.name)}</cbc:RegistrationName>
       </cac:PartyLegalEntity>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${xml(COMPANY.taxNumber)}</cbc:CompanyID>
+        <cac:TaxScheme><cbc:ID>FC</cbc:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
       <cac:Contact>
         <cbc:Name>${xml(COMPANY.owner)}</cbc:Name>
         <cbc:Telephone>${xml(COMPANY.phone)}</cbc:Telephone>
@@ -209,12 +215,14 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
     <cbc:AllowanceChargeReason>Kulturförderabgabe Stadt Köln</cbc:AllowanceChargeReason>
     <cbc:Amount currencyID="EUR">${totals.kultur.toFixed(2)}</cbc:Amount>
     <cac:TaxCategory>
-      <cbc:ID>O</cbc:ID>
+      <cbc:ID>E</cbc:ID>
+      <cbc:Percent>0.00</cbc:Percent>
+      <cbc:TaxExemptionReason>Nicht umsatzsteuerpflichtige kommunale Abgabe</cbc:TaxExemptionReason>
       <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
     </cac:TaxCategory>
   </cac:AllowanceCharge>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="EUR">${totals.taxTotal.toFixed(2)}</cbc:TaxAmount>${taxSubtotalXml(totals.vat7, totals.net7, 7)}${taxSubtotalXml(totals.vat19, totals.net19, 19)}${nonVatSubtotalXml(totals.kultur)}
+    <cbc:TaxAmount currencyID="EUR">${totals.taxTotal.toFixed(2)}</cbc:TaxAmount>${taxSubtotalXml(totals.vat7, totals.net7, 7)}${taxSubtotalXml(totals.vat19, totals.net19, 19)}${exemptSubtotalXml(totals.kultur)}
   </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
     <cbc:LineExtensionAmount currencyID="EUR">${totals.lineNet.toFixed(2)}</cbc:LineExtensionAmount>
@@ -296,3 +304,4 @@ exports.handler = async (event) => {
     };
   }
 };
+

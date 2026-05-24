@@ -1,4 +1,4 @@
-﻿const CACHE = "rechnungsapp-v15";
+﻿const CACHE = "rechnungsapp-v16";
 
 const urls = [
 "./",
@@ -26,4 +26,5 @@ e.respondWith(
 caches.match(e.request).then(r=>r || fetch(e.request))
 );
 });
+
 
