@@ -273,6 +273,54 @@ button.disabled = false
 }
 }
 
+async function erstelleFinaleXRechnung(){
+berechnen()
+const button = document.getElementById("xrechnungButton")
+const daten = sammleRechnungsDaten()
+
+if(button){
+button.disabled = true
+}
+setServerStatus("Finale XRechnung wird serverseitig erstellt ...", "info")
+
+try{
+const response = await fetch("/.netlify/functions/create-xrechnung", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(daten)
+})
+
+if(!response.ok){
+let fehler = "Die finale XRechnung konnte nicht erstellt werden."
+try{
+const json = await response.json()
+if(json?.error) fehler = json.error
+}catch(_err){}
+throw new Error(fehler)
+}
+
+const invoiceNumber = response.headers.get("X-Invoice-Number")
+if(invoiceNumber){
+document.getElementById("rechnungsnummer").value = invoiceNumber
+document.getElementById("r_nummer").innerText = invoiceNumber
+}
+
+const xmlBlob = await response.blob()
+const dateiname = dateinameAusHeader(
+response.headers.get("Content-Disposition"),
+`xrechnung-${invoiceNumber || "final"}.xml`
+)
+downloadDatei(xmlBlob, dateiname, "application/xml")
+setServerStatus(invoiceNumber ? `Finale XRechnung ${invoiceNumber} wurde geladen.` : "Finale XRechnung wurde geladen.", "success")
+}catch(error){
+setServerStatus(error.message || "Unbekannter Fehler beim Erstellen der XRechnung.", "error")
+}finally{
+if(button){
+button.disabled = false
+}
+}
+}
+
 async function pruefeSupabaseStatus(optionen = {}){
 const button = document.getElementById("supabaseStatusButton")
 if(button){
