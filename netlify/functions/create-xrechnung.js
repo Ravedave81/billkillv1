@@ -173,13 +173,13 @@ function createXrechnungXml(payload, totals, invoiceNumber) {
         <cbc:PostalZone>${xml(COMPANY.zip)}</cbc:PostalZone>
         <cac:Country><cbc:IdentificationCode>DE</cbc:IdentificationCode></cac:Country>
       </cac:PostalAddress>
-      <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${xml(COMPANY.name)}</cbc:RegistrationName>
-      </cac:PartyLegalEntity>
       <cac:PartyTaxScheme>
         <cbc:CompanyID>${xml(COMPANY.taxNumber)}</cbc:CompanyID>
         <cac:TaxScheme><cbc:ID>FC</cbc:ID></cac:TaxScheme>
       </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>${xml(COMPANY.name)}</cbc:RegistrationName>
+      </cac:PartyLegalEntity>
       <cac:Contact>
         <cbc:Name>${xml(COMPANY.owner)}</cbc:Name>
         <cbc:Telephone>${xml(COMPANY.phone)}</cbc:Telephone>
