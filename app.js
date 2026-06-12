@@ -399,57 +399,6 @@ button.disabled = false
 }
 }
 
-function zugferdXMLInhalt(){
-  const d = sammleRechnungsDaten()
-  const u = d.unternehmen
-  const positionenXml = d.positionen.map((p, idx) => `
-<ram:IncludedSupplyChainTradeLineItem>
-  <ram:AssociatedDocumentLineDocument><ram:LineID>${idx + 1}</ram:LineID></ram:AssociatedDocumentLineDocument>
-  <ram:SpecifiedTradeProduct><ram:Name>${esc(p.beschreibung)}</ram:Name></ram:SpecifiedTradeProduct>
-  <ram:SpecifiedLineTradeAgreement><ram:GrossPriceProductTradePrice><ram:ChargeAmount>${p.summe.toFixed(2)}</ram:ChargeAmount></ram:GrossPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
-  <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${p.anzahl || 1}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
-  <ram:SpecifiedLineTradeSettlement>
-    <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${p.steuersatz || 7}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
-    <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${p.summe.toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
-  </ram:SpecifiedLineTradeSettlement>
-</ram:IncludedSupplyChainTradeLineItem>`).join("\n")
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
-  <rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:factur-x.eu:1p0:basicwl</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
-  <rsm:ExchangedDocument>
-    <ram:ID>${esc(d.rechnung)}</ram:ID>
-    <ram:TypeCode>380</ram:TypeCode>
-    <ram:IssueDateTime><udt:DateTimeString format="102">${formatISO(d.datum).replaceAll("-", "")}</udt:DateTimeString></ram:IssueDateTime>
-  </rsm:ExchangedDocument>
-  <rsm:SupplyChainTradeTransaction>
-    ${positionenXml}
-    <ram:ApplicableHeaderTradeAgreement>
-      <ram:SellerTradeParty>
-        <ram:Name>${esc(u.name)}</ram:Name>
-        <ram:PostalTradeAddress><ram:PostcodeCode>${esc(u.plz)}</ram:PostcodeCode><ram:LineOne>${esc(u.strasse)}</ram:LineOne><ram:CityName>${esc(u.ort)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress>
-        <ram:URIUniversalCommunication><ram:URIID schemeID="EM">${esc(u.email)}</ram:URIID></ram:URIUniversalCommunication>
-        <ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">${esc(u.steuernummer)}</ram:ID></ram:SpecifiedTaxRegistration>
-      </ram:SellerTradeParty>
-      <ram:BuyerTradeParty><ram:Name>${esc(d.name)}</ram:Name></ram:BuyerTradeParty>
-    </ram:ApplicableHeaderTradeAgreement>
-    <ram:ApplicableHeaderTradeSettlement>
-      <ram:PaymentReference>${esc(d.rechnung)}</ram:PaymentReference>
-      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
-      <ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${esc(u.iban.replaceAll(" ", ""))}</ram:IBANID></ram:PayeePartyCreditorFinancialAccount><ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${esc(u.bic)}</ram:BICID><ram:Name>${esc(u.bank)}</ram:Name></ram:PayeeSpecifiedCreditorFinancialInstitution></ram:SpecifiedTradeSettlementPaymentMeans>
-      <ram:ApplicableTradeTax><ram:CalculatedAmount>${d.mwst7.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${d.netto7.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>7</ram:RateApplicablePercent></ram:ApplicableTradeTax>
-      ${d.mwst19 > 0 ? `<ram:ApplicableTradeTax><ram:CalculatedAmount>${d.mwst19.toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${d.netto19.toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>19</ram:RateApplicablePercent></ram:ApplicableTradeTax>` : ""}
-      <ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${d.netto.toFixed(2)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${d.netto.toFixed(2)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount>${d.mwst.toFixed(2)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${d.gesamt.toFixed(2)}</ram:GrandTotalAmount><ram:DuePayableAmount>${d.gesamt.toFixed(2)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-    </ram:ApplicableHeaderTradeSettlement>
-  </rsm:SupplyChainTradeTransaction>
-</rsm:CrossIndustryInvoice>`
-}
-
-function erstelleZugferdXML(){
-  const d = sammleRechnungsDaten()
-  downloadDatei(zugferdXMLInhalt(), `zugferd-${d.rechnung || "rechnung"}.xml`, "application/xml")
-}
-
 function drawLines(page, lines, x, y, options){
   const { font, size, color, lineHeight = size + 4 } = options
   lines.filter(Boolean).forEach((line, index) => {
@@ -488,15 +437,14 @@ async function erstelleZugferdPDF(){
   berechnen()
   const d = sammleRechnungsDaten()
   const u = d.unternehmen
-  const xml = zugferdXMLInhalt()
   const { PDFDocument, StandardFonts, rgb } = window.PDFLib
   const pdfDoc = await PDFDocument.create()
   pdfDoc.setTitle(`Rechnung ${d.rechnung || ""}`.trim())
   pdfDoc.setAuthor(u.name)
-  pdfDoc.setSubject("ZUGFeRD-Rechnung mit eingebetteter XML")
+  pdfDoc.setSubject("Lesbarer PDF-Beleg ohne eingebettete Rechnungs-XML")
   pdfDoc.setCreator("Wohnzeit-Köln Rechnungsapp")
   pdfDoc.setProducer("pdf-lib")
-  pdfDoc.setKeywords(["ZUGFeRD", "Factur-X", "Rechnung"])
+  pdfDoc.setKeywords(["PDF-Beleg", "Rechnung"])
 
   const page = pdfDoc.addPage([595.28, 841.89])
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -578,15 +526,8 @@ async function erstelleZugferdPDF(){
   drawLines(page, [u.bank, u.iban, `BIC: ${u.bic}`], 330, 70, { font, size: 8, color: black, lineHeight: 10 })
   drawLines(page, ["Steuernr.", u.steuernummer], 468, 70, { font, size: 8, color: black, lineHeight: 10 })
 
-  await pdfDoc.attach(new TextEncoder().encode(xml), "factur-x.xml", {
-    mimeType: "application/xml",
-    description: "ZUGFeRD Rechnungsdaten",
-    creationDate: new Date(),
-    modificationDate: new Date()
-  })
-
   const pdfBytes = await pdfDoc.save()
-  downloadDatei(pdfBytes, `zugferd-${d.rechnung || "rechnung"}.pdf`, "application/pdf")
+  downloadDatei(pdfBytes, `pdf-beleg-${d.rechnung || "rechnung"}.pdf`, "application/pdf")
 }
 
 function erstelleXRechnungXML(){
