@@ -433,6 +433,40 @@ function drawWrappedText(page, text, x, y, options){
   return currentY
 }
 
+function drawFooterIcon(page, type, x, y, options){
+  const { color } = options
+  const thin = 1.1
+  page.drawCircle({ x, y, size: 15, borderColor: color, borderWidth: thin })
+
+  if(type === "home"){
+    page.drawLine({ start: { x: x - 9, y: y - 1 }, end: { x, y: y + 8 }, thickness: thin, color })
+    page.drawLine({ start: { x, y: y + 8 }, end: { x: x + 9, y: y - 1 }, thickness: thin, color })
+    page.drawRectangle({ x: x - 7, y: y - 9, width: 14, height: 10, borderColor: color, borderWidth: thin })
+    page.drawRectangle({ x: x - 2.5, y: y - 9, width: 5, height: 7, borderColor: color, borderWidth: thin })
+    page.drawLine({ start: { x: x - 5, y: y + 2 }, end: { x: x - 5, y: y - 8 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 5, y: y + 2 }, end: { x: x + 5, y: y - 8 }, thickness: thin, color })
+  }
+
+  if(type === "contact"){
+    page.drawRectangle({ x: x - 9, y: y - 11, width: 18, height: 22, borderColor: color, borderWidth: thin })
+    page.drawCircle({ x: x - 5, y: y + 5, size: 2.5, borderColor: color, borderWidth: thin })
+    page.drawRectangle({ x: x - 7.5, y: y - 6, width: 5, height: 5, borderColor: color, borderWidth: thin })
+    ;[6, 0, -6].forEach((offset) => {
+      page.drawLine({ start: { x: x + 1, y: y + offset }, end: { x: x + 7, y: y + offset }, thickness: thin, color })
+    })
+  }
+
+  if(type === "payment"){
+    page.drawText("EUR", { x: x - 8, y: y - 4, size: 8, font: options.font, color })
+    page.drawLine({ start: { x: x - 12, y: y + 7 }, end: { x: x - 7, y: y + 11 }, thickness: thin, color })
+    page.drawLine({ start: { x: x - 12, y: y + 7 }, end: { x: x - 8, y: y + 2 }, thickness: thin, color })
+    page.drawLine({ start: { x: x - 12, y: y + 7 }, end: { x: x - 3, y: y + 7 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 12, y: y - 7 }, end: { x: x + 7, y: y - 11 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 12, y: y - 7 }, end: { x: x + 8, y: y - 2 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 12, y: y - 7 }, end: { x: x + 3, y: y - 7 }, thickness: thin, color })
+  }
+}
+
 async function erstellePdfBeleg(){
   const button = document.getElementById("pdfBelegButton")
   if(button){
@@ -529,6 +563,9 @@ async function erstellePdfBeleg(){
   y -= 28
   page.drawText("Sarah und David Brand", { x: marginL, y, size: 12, font, color: black })
 
+  drawFooterIcon(page, "home", 92, 101, { color: black, font })
+  drawFooterIcon(page, "contact", 238, 101, { color: black, font })
+  drawFooterIcon(page, "payment", 402, 101, { color: black, font })
   page.drawLine({ start: { x: 48, y: 82 }, end: { x: 548, y: 82 }, thickness: 3, color: blue })
   drawLines(page, [u.name, u.strasse, `${u.plz} ${u.ort}`, u.inhaber], 60, 70, { font, size: 8, color: black, lineHeight: 10 })
   drawLines(page, [u.telefon, u.email], 195, 60, { font, size: 8, color: black, lineHeight: 10 })
