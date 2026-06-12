@@ -208,8 +208,13 @@ function downloadDatei(inhalt, dateiname, mimeType){
   const a = document.createElement("a")
   a.href = url
   a.download = dateiname
+  a.style.display = "none"
+  document.body.appendChild(a)
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => {
+    URL.revokeObjectURL(url)
+    a.remove()
+  }, 1000)
 }
 
 function setServerStatus(text, typ = "info"){
@@ -428,12 +433,16 @@ function drawWrappedText(page, text, x, y, options){
   return currentY
 }
 
-async function erstelleZugferdPDF(){
-  if(!window.PDFLib){
-    alert("Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen und erneut versuchen.")
-    return
+async function erstellePdfBeleg(){
+  const button = document.getElementById("pdfBelegButton")
+  if(button){
+    button.disabled = true
   }
-
+  setServerStatus("PDF-Beleg wird erstellt ...", "info")
+  try{
+  if(!window.PDFLib){
+    throw new Error("Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen und erneut versuchen.")
+  }
   berechnen()
   const d = sammleRechnungsDaten()
   const u = d.unternehmen
@@ -528,6 +537,14 @@ async function erstelleZugferdPDF(){
 
   const pdfBytes = await pdfDoc.save()
   downloadDatei(pdfBytes, `pdf-beleg-${d.rechnung || "rechnung"}.pdf`, "application/pdf")
+  setServerStatus("PDF-Beleg wurde erstellt.", "success")
+  }catch(error){
+  setServerStatus(error.message || "PDF-Beleg konnte nicht erstellt werden.", "error")
+  }finally{
+  if(button){
+    button.disabled = false
+  }
+  }
 }
 
 function erstelleXRechnungXML(){
