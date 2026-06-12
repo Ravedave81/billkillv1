@@ -563,9 +563,9 @@ async function erstellePdfBeleg(){
   y -= 28
   page.drawText("Sarah und David Brand", { x: marginL, y, size: 12, font, color: black })
 
-  drawFooterIcon(page, "home", 72, 101, { color: black, font })
+  drawFooterIcon(page, "home", 98, 101, { color: black, font })
   drawFooterIcon(page, "contact", 238, 101, { color: black, font })
-  drawFooterIcon(page, "payment", 466, 101, { color: black, font })
+  drawFooterIcon(page, "payment", 405, 101, { color: black, font })
   page.drawLine({ start: { x: 48, y: 82 }, end: { x: 548, y: 82 }, thickness: 3, color: blue })
   drawLines(page, [u.name, u.strasse, `${u.plz} ${u.ort}`, u.inhaber], 60, 70, { font, size: 8, color: black, lineHeight: 10 })
   drawLines(page, [u.telefon, u.email], 195, 60, { font, size: 8, color: black, lineHeight: 10 })
