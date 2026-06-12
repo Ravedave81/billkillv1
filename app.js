@@ -327,11 +327,41 @@ const button = document.getElementById("supabaseStatusButton")
 if(button){
 button.disabled = true
 }
+setServerStatus(optionen.auto ? "Supabase wird beim Start geprüft ..." : "Supabase wird geprüft ...", "info")
+
+try{
+const response = await fetch("/.netlify/functions/health-check", {
+method: "GET",
+headers: { "Accept": "application/json" },
+cache: "no-store"
+})
+let json = {}
+try{
+json = await response.json()
+}catch(_err){}
+if(!response.ok || !json.ok){
+if(response.status === 404){
+throw new Error("Supabase-Prüfung ist hier nicht verfügbar. Bitte die Netlify-App öffnen, nicht GitHub Pages.")
+}
+throw new Error(json.message || json.error || "Supabase antwortet nicht. Bitte Supabase Dashboard prüfen oder Projekt reaktivieren.")
+}
+setServerStatus(json.message || "Supabase ist erreichbar.", "success")
+}catch(error){
+setServerStatus(error.message || "Supabase konnte nicht geprüft werden. Lokal bitte Netlify Dev und .env prüfen.", "error")
+}finally{
+if(button){
+button.disabled = false
+}
+}
+}
 
 async function ladeRechnungsauszugCsv(){
 const button = document.getElementById("rechnungsauszugButton")
-const pin = window.prompt("Archiv-PIN für den Rechnungsauszug eingeben:")
-if(!pin) return
+const pin = document.getElementById("archivPin")?.value || ""
+if(!pin){
+setServerStatus("Bitte zuerst die Archiv-PIN eintragen.", "error")
+return
+}
 if(button){
 button.disabled = true
 }
@@ -362,33 +392,6 @@ downloadDatei(csvBlob, dateiname, "text/csv;charset=utf-8")
 setServerStatus("Rechnungsauszug wurde geladen.", "success")
 }catch(error){
 setServerStatus(error.message || "Unbekannter Fehler beim Erstellen des Rechnungsauszuges.", "error")
-}finally{
-if(button){
-button.disabled = false
-}
-}
-}
-setServerStatus(optionen.auto ? "Supabase wird beim Start geprüft ..." : "Supabase wird geprüft ...", "info")
-
-try{
-const response = await fetch("/.netlify/functions/health-check", {
-method: "GET",
-headers: { "Accept": "application/json" },
-cache: "no-store"
-})
-let json = {}
-try{
-json = await response.json()
-}catch(_err){}
-if(!response.ok || !json.ok){
-if(response.status === 404){
-throw new Error("Supabase-Prüfung ist hier nicht verfügbar. Bitte die Netlify-App öffnen, nicht GitHub Pages.")
-}
-throw new Error(json.message || json.error || "Supabase antwortet nicht. Bitte Supabase Dashboard prüfen oder Projekt reaktivieren.")
-}
-setServerStatus(json.message || "Supabase ist erreichbar.", "success")
-}catch(error){
-setServerStatus(error.message || "Supabase konnte nicht geprüft werden. Lokal bitte Netlify Dev und .env prüfen.", "error")
 }finally{
 if(button){
 button.disabled = false
