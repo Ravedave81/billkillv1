@@ -1,4 +1,4 @@
-const CACHE = "rechnungsapp-v25";
+const CACHE = "rechnungsapp-v26";
 
 const urls = [
 "./",

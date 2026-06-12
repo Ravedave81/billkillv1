@@ -457,13 +457,13 @@ function drawFooterIcon(page, type, x, y, options){
   }
 
   if(type === "payment"){
-    page.drawText("EUR", { x: x - 8, y: y - 4, size: 8, font: options.font, color })
-    page.drawLine({ start: { x: x - 12, y: y + 7 }, end: { x: x - 7, y: y + 11 }, thickness: thin, color })
-    page.drawLine({ start: { x: x - 12, y: y + 7 }, end: { x: x - 8, y: y + 2 }, thickness: thin, color })
-    page.drawLine({ start: { x: x - 12, y: y + 7 }, end: { x: x - 3, y: y + 7 }, thickness: thin, color })
-    page.drawLine({ start: { x: x + 12, y: y - 7 }, end: { x: x + 7, y: y - 11 }, thickness: thin, color })
-    page.drawLine({ start: { x: x + 12, y: y - 7 }, end: { x: x + 8, y: y - 2 }, thickness: thin, color })
-    page.drawLine({ start: { x: x + 12, y: y - 7 }, end: { x: x + 3, y: y - 7 }, thickness: thin, color })
+    page.drawText("$", { x: x - 4, y: y - 8, size: 22, font: options.font, color })
+    page.drawLine({ start: { x: x - 11, y: y + 7 }, end: { x: x - 6, y: y + 12 }, thickness: thin, color })
+    page.drawLine({ start: { x: x - 11, y: y + 7 }, end: { x: x - 7, y: y + 1 }, thickness: thin, color })
+    page.drawLine({ start: { x: x - 11, y: y + 7 }, end: { x: x - 2, y: y + 7 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 11, y: y - 7 }, end: { x: x + 6, y: y - 12 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 11, y: y - 7 }, end: { x: x + 7, y: y - 1 }, thickness: thin, color })
+    page.drawLine({ start: { x: x + 11, y: y - 7 }, end: { x: x + 2, y: y - 7 }, thickness: thin, color })
   }
 }
 
@@ -563,9 +563,9 @@ async function erstellePdfBeleg(){
   y -= 28
   page.drawText("Sarah und David Brand", { x: marginL, y, size: 12, font, color: black })
 
-  drawFooterIcon(page, "home", 92, 101, { color: black, font })
+  drawFooterIcon(page, "home", 72, 101, { color: black, font })
   drawFooterIcon(page, "contact", 238, 101, { color: black, font })
-  drawFooterIcon(page, "payment", 402, 101, { color: black, font })
+  drawFooterIcon(page, "payment", 466, 101, { color: black, font })
   page.drawLine({ start: { x: 48, y: 82 }, end: { x: 548, y: 82 }, thickness: 3, color: blue })
   drawLines(page, [u.name, u.strasse, `${u.plz} ${u.ort}`, u.inhaber], 60, 70, { font, size: 8, color: black, lineHeight: 10 })
   drawLines(page, [u.telefon, u.email], 195, 60, { font, size: 8, color: black, lineHeight: 10 })
