@@ -136,7 +136,7 @@ function sammleRechnungsDaten(){
   const reinigung = Number(document.getElementById("reinigung").value || 0)
   if(haustier > 0){
     brutto19 += haustier
-    positionen.push({ position: "", beschreibung: "Haustier", preis: 0, summe: haustier, anzahl: 1, steuersatz: 19, kfaRelevant: false })
+    positionen.push({ position: "", beschreibung: "Haustier (inkl. 19 % MwSt.)", preis: 0, summe: haustier, anzahl: 1, steuersatz: 19, kfaRelevant: false })
   }
   if(reinigung > 0){
     brutto7 += reinigung
@@ -326,6 +326,47 @@ async function pruefeSupabaseStatus(optionen = {}){
 const button = document.getElementById("supabaseStatusButton")
 if(button){
 button.disabled = true
+}
+
+async function ladeRechnungsauszugCsv(){
+const button = document.getElementById("rechnungsauszugButton")
+const pin = window.prompt("Archiv-PIN für den Rechnungsauszug eingeben:")
+if(!pin) return
+if(button){
+button.disabled = true
+}
+setServerStatus("Rechnungsauszug wird erstellt ...", "info")
+
+try{
+const response = await fetch("/.netlify/functions/export-invoices-csv", {
+method: "GET",
+headers: { "Accept": "text/csv", "X-Archive-Pin": pin },
+cache: "no-store"
+})
+
+if(!response.ok){
+let fehler = "Der Rechnungsauszug konnte nicht erstellt werden."
+try{
+const json = await response.json()
+if(json?.error) fehler = json.error
+}catch(_err){}
+throw new Error(fehler)
+}
+
+const csvBlob = await response.blob()
+const dateiname = dateinameAusHeader(
+response.headers.get("Content-Disposition"),
+`rechnungsauszug-${new Date().toISOString().slice(0, 10)}.csv`
+)
+downloadDatei(csvBlob, dateiname, "text/csv;charset=utf-8")
+setServerStatus("Rechnungsauszug wurde geladen.", "success")
+}catch(error){
+setServerStatus(error.message || "Unbekannter Fehler beim Erstellen des Rechnungsauszuges.", "error")
+}finally{
+if(button){
+button.disabled = false
+}
+}
 }
 setServerStatus(optionen.auto ? "Supabase wird beim Start geprüft ..." : "Supabase wird geprüft ...", "info")
 

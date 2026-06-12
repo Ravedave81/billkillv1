@@ -1,4 +1,4 @@
-﻿const CACHE = "rechnungsapp-v19";
+const CACHE = "rechnungsapp-v20";
 
 const urls = [
 "./",
@@ -26,8 +26,3 @@ e.respondWith(
 caches.match(e.request).then(r=>r || fetch(e.request))
 );
 });
-
-
-
-
-
