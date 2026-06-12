@@ -62,7 +62,7 @@ function recalculate(payload) {
   const positions = (payload.positionen || []).map((position, index) => {
     const description = sanitize(position.beschreibung);
     const isPet = /haustier/i.test(description);
-    const isAccommodation = /uebernachtung|übernachtung|endreinigung/i.test(description);
+    const isAccommodation = /uebernachtung|übernachtung/i.test(description);
     const rate = Number(position.steuersatz || (isPet ? 19 : 7));
     const quantity = roundMoney(position.anzahl || 1);
     const gross = roundMoney(position.summe || quantity * Number(position.preis || 0));

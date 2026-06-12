@@ -113,7 +113,7 @@ function recalculate(payload) {
     const total = roundMoney(position.summe || amount * price);
     const description = sanitizeText(position.beschreibung);
     const isPet = /haustier/i.test(description);
-    const isAccommodation = /uebernachtung|übernachtung|endreinigung/i.test(description);
+    const isAccommodation = /uebernachtung|übernachtung/i.test(description);
     const taxRate = Number(position.steuersatz || (isPet ? 19 : 7));
     return {
       position: index + 1,

@@ -140,8 +140,7 @@ function sammleRechnungsDaten(){
   }
   if(reinigung > 0){
     brutto7 += reinigung
-    kfaBemessungsgrundlage += reinigung
-    positionen.push({ position: "", beschreibung: "Endreinigung", preis: 0, summe: reinigung, anzahl: 1, steuersatz: 7, kfaRelevant: true })
+    positionen.push({ position: "", beschreibung: "Endreinigung", preis: 0, summe: reinigung, anzahl: 1, steuersatz: 7, kfaRelevant: false })
   }
 
   const kultur = rundeGeld(kfaBemessungsgrundlage * 0.05)
